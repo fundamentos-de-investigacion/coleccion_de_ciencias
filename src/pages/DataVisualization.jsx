@@ -4,7 +4,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   LineChart, Line, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
-import { PieChart as PieIcon, BarChart as BarIcon, TrendingUp, Filter } from 'lucide-react';
+import { PieChart as PieIcon, BarChart as BarIcon, TrendingUp, Filter, Map as MapIcon } from 'lucide-react';
+import MapComponent from '../components/MapComponent';
 
 const DataVisualization = () => {
   const { specimens, metrics } = useSpecimens();
@@ -31,9 +32,34 @@ const DataVisualization = () => {
   return (
     <div className="fade-in">
       <header style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: 'var(--font-size-xxl)', color: 'var(--primary-dark)', marginBottom: '10px' }}>Métricas y Visualizaciones</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Análisis estadístico de la composición y crecimiento de la colección.</p>
+        <h1 style={{ fontSize: 'var(--font-size-xxl)', color: 'var(--primary-dark)', marginBottom: '10px' }}>Análisis e Investigación Avanzada</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Visualización de patrones geográficos y métricas taxonómicas de la colección.</p>
       </header>
+
+      {/* Global Distribution Map */}
+      <div className="sci-card" style={{ marginBottom: '30px' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <MapIcon size={20} color="var(--primary)" /> Mapa de Distribución Biogeográfica
+        </h3>
+        <MapComponent 
+          height="500px" 
+          zoom={4}
+          autoZoom={true}
+          points={specimens
+            .filter(s => s.decimalLatitude && s.decimalLongitude)
+            .map(s => ({
+              lat: parseFloat(s.decimalLatitude),
+              lng: parseFloat(s.decimalLongitude),
+              title: s.scientificName,
+              subtitle: `${s.kingdom} | ${s.locality}`
+            }))
+          } 
+        />
+        <div style={{ marginTop: '15px', fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '20px' }}>
+          <span><strong>Total mapeados:</strong> {specimens.filter(s => s.decimalLatitude && s.decimalLongitude).length}</span>
+          <span><strong>Sin coordenadas:</strong> {specimens.filter(s => !s.decimalLatitude || !s.decimalLongitude).length}</span>
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '30px' }}>
         {/* Kingdom Distribution */}

@@ -3,9 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSpecimens } from '../context/SpecimenContext';
 import { 
   ArrowLeft, Edit3, Trash2, MapPin, Calendar, User, 
-  Tag, Info, ExternalLink, Clock, History, Database
+  Tag, Info, ExternalLink, Clock, History, Database, Quote, Camera
 } from 'lucide-react';
 import loanService from '../services/loanService';
+import mediaService from '../services/mediaService';
+import MapComponent from '../components/MapComponent';
+import { generateAPACitation, generateBibTeXCitation } from '../utils/citationUtils';
 
 const SpecimenDetail = () => {
   const { id } = useParams();
@@ -14,11 +17,14 @@ const SpecimenDetail = () => {
 
   const specimen = specimens.find(s => s.occurrenceID === id);
   const [specimenLoans, setSpecimenLoans] = React.useState([]);
+  const [specimenMedia, setSpecimenMedia] = React.useState([]);
   const [isLoanModalOpen, setIsLoanModalOpen] = React.useState(false);
+  const [citationModal, setCitationModal] = React.useState(null); // 'apa' | 'bibtex' | null
 
   React.useEffect(() => {
     if (id) {
       loanService.getBySpecimen(id).then(setSpecimenLoans);
+      mediaService.getBySpecimen(id).then(setSpecimenMedia);
     }
   }, [id]);
 
@@ -72,6 +78,22 @@ const SpecimenDetail = () => {
           <ArrowLeft size={20} /> Volver
         </button>
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={() => setCitationModal('apa')}
+            style={{ 
+              backgroundColor: 'var(--surface)', 
+              color: 'var(--secondary)', 
+              border: '1px solid var(--secondary)',
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: '600'
+            }}
+          >
+            <Quote size={18} /> Generar Cita
+          </button>
           <Link to={`/edit/${id}`} style={{ 
             backgroundColor: 'var(--surface)', 
             color: 'var(--primary)', 
@@ -138,38 +160,75 @@ const SpecimenDetail = () => {
             <InfoRow label="Epíteto específico" value={specimen.specificEpithet} italic />
           </div>
 
-          <div>
-            <h4 style={{ color: 'var(--primary-dark)', borderBottom: '2px solid var(--primary-light)', paddingBottom: '5px', marginBottom: '15px' }}>
-              Detalles de Registro
-            </h4>
-            <InfoRow label="Registrado por" value={specimen.recordedBy} />
-            <InfoRow label="Fecha" value={specimen.eventDate} />
-            <InfoRow label="Ubicación" value={specimen.locality} />
-            <InfoRow label="Coordenadas" value={
-              specimen.decimalLatitude && specimen.decimalLongitude 
-                ? `${specimen.decimalLatitude}, ${specimen.decimalLongitude}` 
-                : 'No registradas'
-            } />
-          </div>
-
           <div style={{ marginTop: '30px' }}>
             <h4 style={{ color: 'var(--primary-dark)', borderBottom: '2px solid var(--primary-light)', paddingBottom: '5px', marginBottom: '15px' }}>
-              Ubicación en Colección Física
+              Georreferenciación
             </h4>
-            <InfoRow label="Mueble" value={specimen.cabinet} />
-            <InfoRow label="Cajón" value={specimen.drawer} />
-            <InfoRow label="Estante" value={specimen.shelf} />
+            {specimen.decimalLatitude && specimen.decimalLongitude ? (
+              <MapComponent 
+                center={[parseFloat(specimen.decimalLatitude), parseFloat(specimen.decimalLongitude)]}
+                zoom={12}
+                height="250px"
+                points={[{
+                  lat: parseFloat(specimen.decimalLatitude),
+                  lng: parseFloat(specimen.decimalLongitude),
+                  title: specimen.scientificName,
+                  subtitle: specimen.locality
+                }]}
+              />
+            ) : (
+              <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border)', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                Coordenadas no disponibles para este ejemplar.
+              </div>
+            )}
           </div>
         </div>
 
         {/* Sidebar details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="sci-card glass" style={{ backgroundColor: 'white' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+              <Camera size={18} color="var(--primary)" /> Galería Multimedia
+            </h4>
+            {specimenMedia.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
+                {specimenMedia.map(media => (
+                  <a key={media.id} href={media.url} target="_blank" rel="noopener noreferrer" style={{ cursor: 'zoom-in' }}>
+                    <img 
+                      src={media.url} 
+                      alt={media.caption || 'Evidencia biológica'} 
+                      style={{ 
+                        width: '100%', 
+                        height: '80px', 
+                        objectFit: 'cover', 
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border)',
+                        transition: 'var(--transition)'
+                      }}
+                      onMouseOver={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                      onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                No se han cargado imágenes para este ejemplar.
+              </p>
+            )}
+          </div>
+
           <div className="sci-card glass">
             <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-              <Info size={18} color="var(--primary)" /> Descripción del Ejemplar
+              <Info size={18} color="var(--primary)" /> Detalles Adicionales
             </h4>
-            <p style={{ fontSize: '0.95rem', color: 'var(--text-main)', fontStyle: 'italic' }}>
-              "{specimen.description || 'Sin descripción adicional para este especimen.'}"
+            <div style={{ marginBottom: '15px' }}>
+              <InfoRow label="Mueble" value={specimen.cabinet} />
+              <InfoRow label="Cajón" value={specimen.drawer} />
+              <InfoRow label="Estante" value={specimen.shelf} />
+            </div>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontStyle: 'italic', backgroundColor: 'var(--surface)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
+              "{specimen.description || 'Sin descripción adicional.'}"
             </p>
           </div>
 
@@ -300,6 +359,70 @@ const SpecimenDetail = () => {
           }}
         />
       )}
+
+      {citationModal && (
+        <CitationModal 
+          specimen={specimen} 
+          format={citationModal} 
+          onClose={() => setCitationModal(null)} 
+          onSwitch={(fmt) => setCitationModal(fmt)}
+        />
+      )}
+    </div>
+  );
+};
+
+const CitationModal = ({ specimen, format, onClose, onSwitch }) => {
+  const citation = format === 'apa' ? generateAPACitation(specimen) : generateBibTeXCitation(specimen);
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(citation);
+    alert('Cita copiada al portapapeles');
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+      <div className="sci-card fade-in" style={{ width: '100%', maxWidth: '600px', backgroundColor: 'white' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0 }}>Cita Técnica Automática</h3>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={() => onSwitch('apa')}
+              style={{ fontSize: '0.8rem', padding: '4px 12px', borderRadius: '4px', border: '1px solid var(--border)', backgroundColor: format === 'apa' ? 'var(--primary-light)' : 'transparent', color: format === 'apa' ? 'var(--primary-dark)' : 'var(--text-muted)' }}
+            >APA</button>
+            <button 
+              onClick={() => onSwitch('bibtex')}
+              style={{ fontSize: '0.8rem', padding: '4px 12px', borderRadius: '4px', border: '1px solid var(--border)', backgroundColor: format === 'bibtex' ? 'var(--primary-light)' : 'transparent', color: format === 'bibtex' ? 'var(--primary-dark)' : 'var(--text-muted)' }}
+            >BibTeX</button>
+          </div>
+        </div>
+
+        <div style={{ 
+          padding: '20px', 
+          backgroundColor: 'var(--surface)', 
+          borderRadius: 'var(--radius-md)', 
+          border: '1px solid var(--border)',
+          fontFamily: format === 'bibtex' ? 'monospace' : 'inherit',
+          fontSize: '0.9rem',
+          whiteSpace: 'pre-wrap',
+          marginBottom: '20px',
+          maxHeight: '300px',
+          overflowY: 'auto'
+        }}>
+          {citation}
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={onClose} 
+            style={{ flex: 1, backgroundColor: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+          >Cerrar</button>
+          <button 
+            onClick={copyToClipboard}
+            style={{ flex: 2, backgroundColor: 'var(--secondary)', color: 'white', fontWeight: 'bold' }}
+          >Copiar al Portapapeles</button>
+        </div>
+      </div>
     </div>
   );
 };
