@@ -3,8 +3,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSpecimens } from '../context/SpecimenContext';
 import { 
   ArrowLeft, Edit3, Trash2, MapPin, Calendar, User, 
-  Tag, Info, ExternalLink, Clock, History
+  Tag, Info, ExternalLink, Clock, History, Database
 } from 'lucide-react';
+import loanService from '../services/loanService';
 
 const SpecimenDetail = () => {
   const { id } = useParams();
@@ -12,6 +13,22 @@ const SpecimenDetail = () => {
   const { specimens, deleteSpecimen } = useSpecimens();
 
   const specimen = specimens.find(s => s.occurrenceID === id);
+  const [specimenLoans, setSpecimenLoans] = React.useState([]);
+  const [isLoanModalOpen, setIsLoanModalOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (id) {
+      loanService.getBySpecimen(id).then(setSpecimenLoans);
+    }
+  }, [id]);
+
+  const handleReturnLoan = async (loanId) => {
+    if (window.confirm('¿Confirmar que el ejemplar ha sido devuelto a la colección física?')) {
+      await loanService.markAsReturned(loanId);
+      const updated = await loanService.getBySpecimen(id);
+      setSpecimenLoans(updated);
+    }
+  };
 
   if (!specimen) {
     return (
@@ -134,6 +151,15 @@ const SpecimenDetail = () => {
                 : 'No registradas'
             } />
           </div>
+
+          <div style={{ marginTop: '30px' }}>
+            <h4 style={{ color: 'var(--primary-dark)', borderBottom: '2px solid var(--primary-light)', paddingBottom: '5px', marginBottom: '15px' }}>
+              Ubicación en Colección Física
+            </h4>
+            <InfoRow label="Mueble" value={specimen.cabinet} />
+            <InfoRow label="Cajón" value={specimen.drawer} />
+            <InfoRow label="Estante" value={specimen.shelf} />
+          </div>
         </div>
 
         {/* Sidebar details */}
@@ -145,6 +171,63 @@ const SpecimenDetail = () => {
             <p style={{ fontSize: '0.95rem', color: 'var(--text-main)', fontStyle: 'italic' }}>
               "{specimen.description || 'Sin descripción adicional para este especimen.'}"
             </p>
+          </div>
+
+          <div className="sci-card glass">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                <History size={18} color="var(--secondary)" /> Gestión de Préstamos
+              </h4>
+              <button 
+                onClick={() => setIsLoanModalOpen(true)}
+                style={{ 
+                  backgroundColor: 'var(--primary)', 
+                  color: 'white', 
+                  fontSize: '0.75rem', 
+                  padding: '4px 10px', 
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                + Registrar Préstamo
+              </button>
+            </div>
+            
+            {specimenLoans.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {specimenLoans.map(loan => (
+                  <div key={loan.id} style={{ 
+                    padding: '10px', 
+                    borderRadius: 'var(--radius-md)', 
+                    backgroundColor: loan.status === 'active' ? 'var(--primary-light)' : 'var(--surface)',
+                    fontSize: '0.85rem',
+                    border: '1px solid var(--border)'
+                  }}>
+                    <div style={{ fontWeight: '600', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{loan.borrower}</span>
+                      <span style={{ color: loan.status === 'active' ? 'var(--primary-dark)' : 'var(--text-muted)' }}>
+                        {loan.status === 'active' ? 'EN PRÉSTAMO' : 'DEVUELTO'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{loan.institution}</div>
+                    <div style={{ fontSize: '0.75rem', marginTop: '5px' }}>
+                      {loan.loan_date} → {loan.return_date || loan.due_date || 'Pendiente'}
+                    </div>
+                    {loan.status === 'active' && (
+                      <button 
+                        onClick={() => handleReturnLoan(loan.id)}
+                        style={{ marginTop: '8px', color: 'var(--primary)', background: 'none', fontWeight: 'bold', fontSize: '0.75rem', padding: 0 }}
+                      >
+                        Marcar como Devuelto
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Sin historial de préstamos.</p>
+            )}
           </div>
 
           <div className="sci-card glass">
@@ -205,6 +288,60 @@ const SpecimenDetail = () => {
             </p>
           </a>
         </div>
+      </div>
+      {isLoanModalOpen && (
+        <LoanModal 
+          specimenId={id} 
+          onClose={() => setIsLoanModalOpen(false)} 
+          onSuccess={async () => {
+            setIsLoanModalOpen(false);
+            const updated = await loanService.getBySpecimen(id);
+            setSpecimenLoans(updated);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+const LoanModal = ({ specimenId, onClose, onSuccess }) => {
+  const [borrower, setBorrower] = React.useState('');
+  const [institution, setInstitution] = React.useState('');
+  const [dueDate, setDueDate] = React.useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await loanService.create({
+      specimen_id: specimenId,
+      borrower,
+      institution,
+      due_date: dueDate
+    });
+    onSuccess();
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+      <div className="sci-card" style={{ width: '100%', maxWidth: '400px' }}>
+        <h3 style={{ marginBottom: '20px' }}>Registrar Préstamo Externo</h3>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Investigador / Receptor</label>
+            <input required value={borrower} onChange={e => setBorrower(e.target.value)} style={{ width: '100%', marginTop: '5px' }} placeholder="Nombre completo" />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Institución Destino</label>
+            <input required value={institution} onChange={e => setInstitution(e.target.value)} style={{ width: '100%', marginTop: '5px' }} placeholder="Universidad, Herbario..." />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Fecha Estimada de Entrega</label>
+            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ width: '100%', marginTop: '5px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, backgroundColor: 'transparent', color: 'var(--text-muted)' }}>Cancelar</button>
+            <button type="submit" style={{ flex: 2, backgroundColor: 'var(--primary)', color: 'white' }}>Confirmar Préstamo</button>
+          </div>
+        </form>
       </div>
     </div>
   );

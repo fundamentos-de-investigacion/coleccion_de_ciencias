@@ -7,6 +7,7 @@ import {
   BarChart3, 
   BookOpen, 
   FileUp, 
+  History,
   Info,
   X
 } from 'lucide-react';
@@ -21,6 +22,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     { name: 'Visualizaciones', icon: <BarChart3 size={20} />, path: '/visualizations' },
     { name: 'Darwin Core', icon: <BookOpen size={20} />, path: '/darwin-core' },
     { name: 'Importar/Exportar', icon: <FileUp size={20} />, path: '/import-export' },
+    { name: 'Préstamos', icon: <History size={20} />, path: '/loans' },
     { name: 'Información', icon: <Info size={20} />, path: '/about' },
   ];
 

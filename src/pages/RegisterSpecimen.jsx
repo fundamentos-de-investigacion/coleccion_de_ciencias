@@ -5,7 +5,7 @@ import { validateSpecimen } from '../utils/validationUtils';
 import { normalizeSpecimenData } from '../utils/normalizationUtils';
 import { 
   ArrowLeft, Save, AlertCircle, Info, Beaker, Map, 
-  User as UserIcon, Calendar as CalendarIcon, Tag
+  User as UserIcon, Calendar as CalendarIcon, Tag, Database
 } from 'lucide-react';
 
 const RegisterSpecimen = () => {
@@ -28,7 +28,10 @@ const RegisterSpecimen = () => {
     decimalLongitude: '',
     eventDate: new Date().toISOString().split('T')[0],
     recordedBy: '',
-    description: ''
+    description: '',
+    cabinet: '',
+    drawer: '',
+    shelf: ''
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -202,6 +205,12 @@ const RegisterSpecimen = () => {
           <InputField label="Longitud Decimal" name="decimalLongitude" type="number" placeholder="Ej: -74.0817" />
           <InputField label="Fecha de Registro" name="eventDate" type="date" required />
           <InputField label="Registrado por (Colector)" name="recordedBy" placeholder="Nombre del investigador" />
+        </FormSection>
+
+        <FormSection title="Ubicación en Colección Física" icon={<Database size={20} color="var(--primary)" />}>
+          <InputField label="Mueble" name="cabinet" placeholder="Ej: Mueble A1" />
+          <InputField label="Cajón" name="drawer" placeholder="Ej: Cajón 12" />
+          <InputField label="Estante" name="shelf" placeholder="Ej: Nivel 3" />
         </FormSection>
 
         <FormSection title="Información Adicional" icon={<Tag size={20} color="var(--warning)" />}>

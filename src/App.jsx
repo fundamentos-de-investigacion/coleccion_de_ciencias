@@ -14,6 +14,7 @@ import RegisterSpecimen from './pages/RegisterSpecimen';
 import DataVisualization from './pages/DataVisualization';
 import DarwinCoreInfo from './pages/DarwinCoreInfo';
 import ImportExport from './pages/ImportExport';
+import Loans from './pages/Loans';
 import About from './pages/About';
 import Login from './pages/Login';
 
@@ -107,6 +108,12 @@ function AppLayout() {
           <Route path="/import-export" element={
             <ProtectedRoute>
               <ImportExport />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/loans" element={
+            <ProtectedRoute>
+              <Loans />
             </ProtectedRoute>
           } />
           
