@@ -12,6 +12,8 @@ import MapComponent from '../components/MapComponent';
 import { useAuth } from '../context/AuthContext';
 import { generateAPACitation, generateBibTeXCitation } from '../utils/citationUtils';
 
+import LoanModal from '../components/LoanModal';
+
 const SpecimenDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,21 +25,41 @@ const SpecimenDetail = () => {
   const [specimenMedia, setSpecimenMedia] = React.useState([]);
   const [specimenAudit, setSpecimenAudit] = React.useState([]);
   const [isLoanModalOpen, setIsLoanModalOpen] = React.useState(false);
+  const [isAddMediaModalOpen, setIsAddMediaModalOpen] = React.useState(false);
   const [citationModal, setCitationModal] = React.useState(null); // 'apa' | 'bibtex' | null
+  const [currentImageIdx, setCurrentImageIdx] = React.useState(0);
 
   React.useEffect(() => {
     if (id) {
-      loanService.getBySpecimen(id).then(setSpecimenLoans);
-      mediaService.getBySpecimen(id).then(setSpecimenMedia);
+      loanService.getBySpecimen(id).then(setSpecimensLoans); // Note: I should fix the setter name if it's different in current state (checking...)
+      mediaService.getBySpecimen(id).then(data => {
+        setSpecimenMedia(data);
+        setCurrentImageIdx(0);
+      });
       auditService.getBySpecimen(id).then(setSpecimenAudit);
     }
   }, [id]);
+
+  const setSpecimensLoans = (data) => setSpecimenLoans(data); // Adapter for the setter used above
+
+  const refreshMedia = async () => {
+    const data = await mediaService.getBySpecimen(id);
+    setSpecimenMedia(data);
+    setCurrentImageIdx(data.length - 1);
+  };
 
   const handleReturnLoan = async (loanId) => {
     if (window.confirm('¿Confirmar que el ejemplar ha sido devuelto a la colección física?')) {
       await loanService.markAsReturned(loanId);
       const updated = await loanService.getBySpecimen(id);
       setSpecimenLoans(updated);
+    }
+  };
+
+  const handleDelete = () => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este especimen de la colección?')) {
+      deleteSpecimen(id);
+      navigate('/catalog');
     }
   };
 
@@ -49,13 +71,6 @@ const SpecimenDetail = () => {
       </div>
     );
   }
-
-  const handleDelete = () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este especimen de la colección?')) {
-      deleteSpecimen(id);
-      navigate('/catalog');
-    }
-  };
 
   const InfoRow = ({ label, value, italic = false }) => (
     <div style={{ 
@@ -75,6 +90,7 @@ const SpecimenDetail = () => {
 
   return (
     <div className="fade-in">
+      {/* ... header logic (ArrowLeft, edit, delete buttons) ... */}
       <header style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button 
           onClick={() => navigate(-1)} 
@@ -169,6 +185,72 @@ const SpecimenDetail = () => {
             <InfoRow label="Epíteto específico" value={specimen.specificEpithet} italic />
           </div>
 
+          {/* ADVANCED GALLERY INTEGRATION */}
+          <div style={{ marginTop: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h4 style={{ color: 'var(--primary-dark)', borderBottom: '2px solid var(--primary-light)', paddingBottom: '5px', margin: 0 }}>
+                Evidencia Biológica
+              </h4>
+              {user && (
+                <button 
+                  onClick={() => setIsAddMediaModalOpen(true)}
+                  style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary-dark)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <Camera size={14} /> Añadir Foto
+                </button>
+              )}
+            </div>
+
+            {specimenMedia.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: 'black', height: '350px' }}>
+                  <img 
+                    src={specimenMedia[currentImageIdx].url} 
+                    alt={specimenMedia[currentImageIdx].caption} 
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '15px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', color: 'white' }}>
+                    <p style={{ margin: 0, fontSize: '0.85rem' }}>{specimenMedia[currentImageIdx].caption || 'Sin pie de foto científico'}</p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
+                  {specimenMedia.map((media, idx) => (
+                    <button 
+                      key={media.id} 
+                      onClick={() => setCurrentImageIdx(idx)}
+                      style={{ 
+                        flexShrink: 0,
+                        width: '80px', 
+                        height: '60px', 
+                        padding: 0,
+                        borderRadius: 'var(--radius-sm)', 
+                        overflow: 'hidden',
+                        border: currentImageIdx === idx ? '3px solid var(--primary)' : '2px solid transparent',
+                        opacity: currentImageIdx === idx ? 1 : 0.6,
+                        transition: '0.2s'
+                      }}
+                    >
+                      <img src={media.url} alt="thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ 
+                padding: '40px 20px', 
+                textAlign: 'center', 
+                backgroundColor: 'var(--surface)', 
+                borderRadius: 'var(--radius-lg)', 
+                border: '1px dashed var(--border)', 
+                color: 'var(--text-muted)' 
+              }}>
+                <Camera size={40} style={{ opacity: 0.3, marginBottom: '10px' }} />
+                <p style={{ fontSize: '0.9rem' }}>No hay documentación fotográfica cargada para este especímen.</p>
+              </div>
+            )}
+          </div>
+
           <div style={{ marginTop: '30px' }}>
             <h4 style={{ color: 'var(--primary-dark)', borderBottom: '2px solid var(--primary-light)', paddingBottom: '5px', marginBottom: '15px' }}>
               Georreferenciación
@@ -195,38 +277,6 @@ const SpecimenDetail = () => {
 
         {/* Sidebar details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="sci-card glass" style={{ backgroundColor: 'white' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-              <Camera size={18} color="var(--primary)" /> Galería Multimedia
-            </h4>
-            {specimenMedia.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
-                {specimenMedia.map(media => (
-                  <a key={media.id} href={media.url} target="_blank" rel="noopener noreferrer" style={{ cursor: 'zoom-in' }}>
-                    <img 
-                      src={media.url} 
-                      alt={media.caption || 'Evidencia biológica'} 
-                      style={{ 
-                        width: '100%', 
-                        height: '80px', 
-                        objectFit: 'cover', 
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--border)',
-                        transition: 'var(--transition)'
-                      }}
-                      onMouseOver={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-                      onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}
-                    />
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                No se han cargado imágenes para este ejemplar.
-              </p>
-            )}
-          </div>
-
           <div className="sci-card glass">
             <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <Info size={18} color="var(--primary)" /> Detalles Adicionales
@@ -309,14 +359,17 @@ const SpecimenDetail = () => {
                 specimenAudit.map(log => (
                   <div key={log.id} style={{ fontSize: '0.8rem', paddingBottom: '10px', borderBottom: '1px dashed var(--border)' }}>
                     <div style={{ fontWeight: '700', color: 'var(--text-main)', marginBottom: '3px' }}>
-                      {log.user_email} corrigió <span style={{ color: 'var(--primary)' }}>{log.field_name}</span>
+                      {log.user_email} corrigió <span style={{ color: 'var(--primary)' }}>{Object.keys(log.changed_fields).join(', ')}</span>
                     </div>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '5px' }}>
                       {new Date(log.created_at).toLocaleString()}
                     </div>
-                    <div style={{ padding: '5px', backgroundColor: 'var(--surface)', borderRadius: '4px' }}>
-                      <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{log.old_value}</span> → <strong>{log.new_value}</strong>
-                    </div>
+                    {Object.entries(log.changed_fields).map(([field, values]) => (
+                      <div key={field} style={{ padding: '5px', backgroundColor: 'var(--surface)', borderRadius: '4px', marginBottom: '5px' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>{field}:</span>
+                        <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{values.old}</span> → <strong>{values.new}</strong>
+                      </div>
+                    ))}
                     {log.reason && (
                       <div style={{ marginTop: '5px', fontStyle: 'italic', color: 'var(--text-muted)' }}>
                         Motivo: "{log.reason}"
@@ -331,7 +384,6 @@ const SpecimenDetail = () => {
               )}
             </div>
           </div>
-
           <a 
             href="https://www.gbif.org/darwin-core" 
             target="_blank" 
@@ -371,6 +423,7 @@ const SpecimenDetail = () => {
           </a>
         </div>
       </div>
+      
       {isLoanModalOpen && (
         <LoanModal 
           specimenId={id} 
@@ -383,6 +436,14 @@ const SpecimenDetail = () => {
         />
       )}
 
+      {isAddMediaModalOpen && (
+        <AddMediaModal 
+          specimenId={id} 
+          onClose={() => setIsAddMediaModalOpen(false)} 
+          onSuccess={refreshMedia}
+        />
+      )}
+
       {citationModal && (
         <CitationModal 
           specimen={specimen} 
@@ -391,6 +452,68 @@ const SpecimenDetail = () => {
           onSwitch={(fmt) => setCitationModal(fmt)}
         />
       )}
+    </div>
+  );
+};
+
+const AddMediaModal = ({ specimenId, onClose, onSuccess }) => {
+  const [file, setFile] = React.useState(null);
+  const [caption, setCaption] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      await mediaService.uploadMedia(file, specimenId, caption);
+      onSuccess();
+      onClose();
+    } catch (err) {
+      alert('Error al subir la imagen. Verifica el almacenamiento de Supabase.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+      <div className="sci-card fade-in" style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <Camera size={24} color="var(--primary)" />
+          <h3 style={{ margin: 0 }}>Cargar Evidencia Visual</h3>
+        </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Archivo de Imagen</label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={e => setFile(e.target.files[0])} 
+              style={{ width: '100%', marginTop: '5px' }} 
+              required
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Pie de Foto Científico</label>
+            <textarea 
+              value={caption} 
+              onChange={e => setCaption(e.target.value)} 
+              placeholder="Ej: Detalle de pétalos bajo lupa 40x..."
+              style={{ width: '100%', marginTop: '5px', height: '80px', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} 
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={onClose} disabled={loading} style={{ flex: 1, backgroundColor: 'transparent', color: 'var(--text-muted)' }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading || !file} style={{ flex: 2, backgroundColor: 'var(--primary)', color: 'white', fontWeight: 'bold' }}>
+              {loading ? 'Subiendo...' : 'Cargar Foto'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
@@ -445,49 +568,6 @@ const CitationModal = ({ specimen, format, onClose, onSwitch }) => {
             style={{ flex: 2, backgroundColor: 'var(--secondary)', color: 'white', fontWeight: 'bold' }}
           >Copiar al Portapapeles</button>
         </div>
-      </div>
-    </div>
-  );
-};
-
-const LoanModal = ({ specimenId, onClose, onSuccess }) => {
-  const [borrower, setBorrower] = React.useState('');
-  const [institution, setInstitution] = React.useState('');
-  const [dueDate, setDueDate] = React.useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await loanService.create({
-      specimen_id: specimenId,
-      borrower,
-      institution,
-      due_date: dueDate
-    });
-    onSuccess();
-  };
-
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-      <div className="sci-card" style={{ width: '100%', maxWidth: '400px' }}>
-        <h3 style={{ marginBottom: '20px' }}>Registrar Préstamo Externo</h3>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Investigador / Receptor</label>
-            <input required value={borrower} onChange={e => setBorrower(e.target.value)} style={{ width: '100%', marginTop: '5px' }} placeholder="Nombre completo" />
-          </div>
-          <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Institución Destino</label>
-            <input required value={institution} onChange={e => setInstitution(e.target.value)} style={{ width: '100%', marginTop: '5px' }} placeholder="Universidad, Herbario..." />
-          </div>
-          <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Fecha Estimada de Entrega</label>
-            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ width: '100%', marginTop: '5px' }} />
-          </div>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, backgroundColor: 'transparent', color: 'var(--text-muted)' }}>Cancelar</button>
-            <button type="submit" style={{ flex: 2, backgroundColor: 'var(--primary)', color: 'white' }}>Confirmar Préstamo</button>
-          </div>
-        </form>
       </div>
     </div>
   );

@@ -214,22 +214,22 @@ const RegisterSpecimen = () => {
               placeholder="Ej: Archaea, Chromista..." 
             />
           )}
-          <InputField label="Filo / División" name="phylum" placeholder="Ej: Tracheophyta" />
-          <InputField label="Clase" name="class" placeholder="Ej: Magnoliopsida" />
-          <InputField label="Orden" name="order" placeholder="Ej: Asterales" />
-          <InputField label="Familia" name="family" placeholder="Ej: Asteraceae" />
-          <InputField label="Género" name="genus" placeholder="Ej: Espeletia" />
-          <InputField label="Epíteto Específico" name="specificEpithet" placeholder="Ej: grandiflora" />
+          <InputField label="Filo / División" name="phylum" required placeholder="Ej: Tracheophyta" />
+          <InputField label="Clase" name="class" required placeholder="Ej: Magnoliopsida" />
+          <InputField label="Orden" name="order" required placeholder="Ej: Asterales" />
+          <InputField label="Familia" name="family" required placeholder="Ej: Asteraceae" />
+          <InputField label="Género" name="genus" required placeholder="Ej: Espeletia" />
+          <InputField label="Epíteto Específico" name="specificEpithet" required placeholder="Ej: grandiflora" />
         </FormSection>
 
         <FormSection title="Localidad y Evento" icon={<Map size={20} color="var(--secondary)" />}>
           <div style={{ gridColumn: '1 / -1' }}>
-            <InputField label="Ubicación Detallada" name="locality" placeholder="Ej: Páramo de Sumapaz, Colombia" />
+            <InputField label="Ubicación Detallada" name="locality" required placeholder="Ej: Páramo de Sumapaz, Colombia" />
           </div>
           <InputField label="Latitud Decimal" name="decimalLatitude" type="number" placeholder="Ej: 4.6097" />
           <InputField label="Longitud Decimal" name="decimalLongitude" type="number" placeholder="Ej: -74.0817" />
           <InputField label="Fecha de Registro" name="eventDate" type="date" required />
-          <InputField label="Registrado por (Colector)" name="recordedBy" placeholder="Nombre del investigador" />
+          <InputField label="Registrado por (Colector)" name="recordedBy" required placeholder="Nombre del investigador" />
         </FormSection>
 
         <FormSection title="Ubicación en Colección Física" icon={<Database size={20} color="var(--primary)" />}>

@@ -9,10 +9,44 @@ export const validateSpecimen = (specimen) => {
     errors.kingdom = 'El Reino es obligatorio.';
   }
 
-  if (specimen.eventDate) {
+  if (!specimen.phylum) {
+    errors.phylum = 'El Filo/División es obligatorio.';
+  }
+
+  if (!specimen.class) {
+    errors.class = 'La Clase es obligatoria.';
+  }
+
+  if (!specimen.order) {
+    errors.order = 'El Orden es obligatorio.';
+  }
+
+  if (!specimen.family) {
+    errors.family = 'La Familia es obligatoria.';
+  }
+
+  if (!specimen.genus) {
+    errors.genus = 'El Género es obligatorio.';
+  }
+
+  if (!specimen.specificEpithet) {
+    errors.specificEpithet = 'El Epíteto específico es obligatorio.';
+  }
+
+  if (!specimen.locality) {
+    errors.locality = 'La Localidad es obligatoria.';
+  }
+
+  if (!specimen.recordedBy) {
+    errors.recordedBy = 'El Colector es obligatorio.';
+  }
+
+  if (!specimen.eventDate) {
+    errors.eventDate = 'La Fecha de registro es obligatoria.';
+  } else {
     const date = new Date(specimen.eventDate);
     if (isNaN(date.getTime())) {
-      errors.eventDate = 'Fecha de evento no válida.';
+      errors.eventDate = 'Fecha de registro no válida.';
     }
   }
 

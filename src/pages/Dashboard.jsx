@@ -13,14 +13,21 @@ import {
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import loanService from '../services/loanService';
+import LoanModal from '../components/LoanModal';
 
 const Dashboard = ({ theme }) => {
   const { specimens, metrics, resetCollection, syncLocalData, loading } = useSpecimens();
   const [hasLocalData, setHasLocalData] = useState(false);
   const [recentLoans, setRecentLoans] = useState([]);
+  const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
+
+  const fetchRecentLoans = async () => {
+    const data = await loanService.getAll();
+    setRecentLoans(data.slice(0, 5));
+  };
 
   useEffect(() => {
-    loanService.getAll().then(data => setRecentLoans(data.slice(0, 5)));
+    fetchRecentLoans();
 
     const local = localStorage.getItem('bio_collection_specimens');
     if (local) {
@@ -61,6 +68,34 @@ const Dashboard = ({ theme }) => {
           <p style={{ color: 'var(--text-muted)' }}>Resumen de la colección biológica.</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={() => setIsLoanModalOpen(true)}
+            style={{
+              backgroundColor: 'var(--secondary)',
+              color: 'white',
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: '600',
+              border: 'none',
+              cursor: 'pointer'
+            }}>
+            <Clock size={18} /> Registrar Préstamo
+          </button>
+          <Link to="/register" style={{
+            backgroundColor: 'var(--primary)',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: '600'
+          }}>
+            <Plus size={18} /> Nuevo Registro
+          </Link>
           <button
             onClick={() => {
               if (window.confirm('¿Estás seguro de restablecer la colección? Se perderán todos los datos manuales.')) {
@@ -76,22 +111,21 @@ const Dashboard = ({ theme }) => {
               fontSize: '0.85rem'
             }}
           >
-            Restablecer Datos
+            Restablecer
           </button>
-          <Link to="/register" style={{
-            backgroundColor: 'var(--primary)',
-            color: 'white',
-            padding: '8px 16px',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontWeight: '600'
-          }}>
-            <Plus size={18} /> Nuevo Registro
-          </Link>
         </div>
       </header>
+
+      {isLoanModalOpen && (
+        <LoanModal 
+          availableSpecimens={specimens} // Modal will filter or show IDs
+          onClose={() => setIsLoanModalOpen(false)}
+          onSuccess={() => {
+            setIsLoanModalOpen(false);
+            fetchRecentLoans();
+          }}
+        />
+      )}
 
       {hasLocalData && (
         <motion.div

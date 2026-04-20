@@ -87,7 +87,7 @@ function AppLayout() {
         </div>
       ) : (
         <div style={{ minHeight: '100vh', width: '100%' }}>
-          <PublicNavbar />
+          <PublicNavbar theme={theme} toggleTheme={toggleTheme} />
           <main style={{ padding: '70px 0 0 0' }}>
             <Routes>
               <Route path="/" element={<PublicPortal />} />

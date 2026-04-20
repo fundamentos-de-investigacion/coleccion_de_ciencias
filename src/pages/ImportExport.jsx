@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useSpecimens } from '../context/SpecimenContext';
 import { validateImportFile } from '../utils/validationUtils';
-import { 
-  Download, Upload, FileJson, AlertCircle, 
-  CheckCircle2, HelpCircle, Database, RefreshCw, 
+import {
+  Download, Upload, FileJson, AlertCircle,
+  CheckCircle2, HelpCircle, Database, RefreshCw,
   FileSpreadsheet, BookOpen, Table, Info
 } from 'lucide-react';
 
@@ -72,7 +72,7 @@ const ImportExport = () => {
           addNotification('El archivo no contiene registros válidos', 'error');
           return;
         }
-        
+
         const validation = validateImportFile(records);
         if (!validation.isValid) {
           addNotification(validation.error, 'error');
@@ -83,7 +83,7 @@ const ImportExport = () => {
         if (result.success) {
           setImportStats({
             total: records.length,
-            success: records.length, 
+            success: records.length,
             failed: 0,
             mode: importMode
           });
@@ -121,10 +121,10 @@ const ImportExport = () => {
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             Descarga la base de datos completa en formato JSON compatible con Darwin Core. Incluye metadatos de versión y auditoría.
           </p>
-          <div style={{ 
-            padding: '15px', 
-            backgroundColor: 'var(--surface)', 
-            borderRadius: 'var(--radius-md)', 
+          <div style={{
+            padding: '15px',
+            backgroundColor: 'var(--surface)',
+            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border)',
             fontSize: '0.85rem'
           }}>
@@ -132,13 +132,13 @@ const ImportExport = () => {
             Total de especímenes a exportar: <strong>{specimens.length}</strong>
           </div>
           <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-            <button 
+            <button
               onClick={handleExport}
-              style={{ 
+              style={{
                 flex: 1,
-                backgroundColor: 'var(--primary)', 
-                color: 'white', 
-                padding: '12px', 
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                padding: '12px',
                 borderRadius: 'var(--radius-md)',
                 fontWeight: '700',
                 display: 'flex',
@@ -150,13 +150,13 @@ const ImportExport = () => {
             >
               <FileJson size={20} /> JSON
             </button>
-            <button 
+            <button
               onClick={handleExcelExport}
-              style={{ 
+              style={{
                 flex: 1,
                 backgroundColor: '#217346', // Excel Green
-                color: 'white', 
-                padding: '12px', 
+                color: 'white',
+                padding: '12px',
                 borderRadius: 'var(--radius-md)',
                 fontWeight: '700',
                 display: 'flex',
@@ -179,17 +179,17 @@ const ImportExport = () => {
             </div>
             <h3>Importar Datos</h3>
           </div>
-          
+
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '10px' }}>
               Estrategia de Integración:
             </label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button 
+              <button
                 onClick={() => setImportMode('merge')}
-                style={{ 
-                  flex: 1, 
-                  padding: '10px', 
+                style={{
+                  flex: 1,
+                  padding: '10px',
                   fontSize: '0.8rem',
                   borderRadius: 'var(--radius-md)',
                   border: `1px solid ${importMode === 'merge' ? 'var(--secondary)' : 'var(--border)'}`,
@@ -204,11 +204,11 @@ const ImportExport = () => {
               >
                 <RefreshCw size={14} /> Fusionar (Merge)
               </button>
-              <button 
+              <button
                 onClick={() => setImportMode('replace')}
-                style={{ 
-                  flex: 1, 
-                  padding: '10px', 
+                style={{
+                  flex: 1,
+                  padding: '10px',
                   fontSize: '0.8rem',
                   borderRadius: 'var(--radius-md)',
                   border: `1px solid ${importMode === 'replace' ? 'var(--error)' : 'var(--border)'}`,
@@ -226,7 +226,7 @@ const ImportExport = () => {
             </div>
           </div>
 
-          <label 
+          <label
             onDragOver={(e) => { e.preventDefault(); setIsHovering(true); }}
             onDragLeave={() => setIsHovering(false)}
             onDrop={(e) => { e.preventDefault(); setIsHovering(false); handleFileUpload({ target: { files: e.dataTransfer.files } }); }}
@@ -320,7 +320,7 @@ const ImportExport = () => {
                 <td style={{ padding: '12px' }}><code>eventDate</code></td>
                 <td style={{ padding: '12px' }}>Fecha de recolección/observación.</td>
                 <td style={{ padding: '12px' }}>YYYY-MM-DD</td>
-                <td style={{ padding: '12px' }}>2024-03-20</td>
+                <td style={{ padding: '12px' }}>2026-03-20</td>
               </tr>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '12px' }}><code>decimalLatitude</code></td>

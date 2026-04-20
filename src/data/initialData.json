@@ -32,11 +32,11 @@
     "locality": "Jardín Botánico de Bogotá, Colombia",
     "decimalLatitude": 4.6685,
     "decimalLongitude": -74.1011,
-    "eventDate": "2024-02-10",
+    "eventDate": "2026-02-10",
     "recordedBy": "Biol. Carlos Mario Tobón",
     "description": "Avistamiento de ejemplar macho alimentándose de Salvia bogotensis. Comportamiento territorial observado.",
-    "createdAt": "2024-02-10T15:30:00Z",
-    "lastModified": "2024-02-10T15:30:00Z",
+    "createdAt": "2026-02-10T15:30:00Z",
+    "lastModified": "2026-02-10T15:30:00Z",
     "version": 1
   },
   {
@@ -72,11 +72,11 @@
     "locality": "Reserva Natural Chicaque, Soacha, Colombia",
     "decimalLatitude": 4.6156,
     "decimalLongitude": -74.3012,
-    "eventDate": "2024-01-05",
+    "eventDate": "2064-01-05",
     "recordedBy": "Ana María Jiménez",
     "description": "Mariposa azul brillante (Morpho azul). Recolectada cerca a zona de quebrada para estudio de coloración.",
-    "createdAt": "2024-01-05T11:45:00Z",
-    "lastModified": "2024-01-05T11:45:00Z",
+    "createdAt": "2026-01-05T11:45:00Z",
+    "lastModified": "2026-01-05T11:45:00Z",
     "version": 1
   },
   {
@@ -112,11 +112,11 @@
     "locality": "Valle del Magdalena Medio, Antioquia, Colombia",
     "decimalLatitude": 6.1234,
     "decimalLongitude": -74.5678,
-    "eventDate": "2024-03-15",
+    "eventDate": "2026-03-15",
     "recordedBy": "Biol. Laura Vanessa",
     "description": "Rara avis, rana dardo venenosa de bandas amarillas. Localizada en hojarasca húmeda.",
-    "createdAt": "2024-03-15T14:10:00Z",
-    "lastModified": "2024-03-15T14:10:00Z",
+    "createdAt": "2026-03-15T14:10:00Z",
+    "lastModified": "2026-03-15T14:10:00Z",
     "version": 1
   },
   {
@@ -152,11 +152,11 @@
     "locality": "Santuario de Flora y Fauna Iguaque, Boyacá, Colombia",
     "decimalLatitude": 5.7001,
     "decimalLongitude": -73.4501,
-    "eventDate": "2024-04-01",
+    "eventDate": "2026-04-01",
     "recordedBy": "Cámara trampa SFF Iguaque",
     "description": "Registro fotográfico nocturno de Puma (León de montaña). Individuo aparentemente saludable cruzando sendero.",
-    "createdAt": "2024-04-01T22:15:00Z",
-    "lastModified": "2024-04-01T22:15:00Z",
+    "createdAt": "2026-04-01T22:15:00Z",
+    "lastModified": "2026-04-01T22:15:00Z",
     "version": 1
   }
 ]

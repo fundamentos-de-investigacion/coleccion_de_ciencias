@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Search, UserCircle2, Microscope } from 'lucide-react';
+import { Search, UserCircle2, Microscope, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const PublicNavbar = () => {
+const PublicNavbar = ({ theme, toggleTheme }) => {
   const { user } = useAuth();
 
   return (
@@ -13,9 +13,9 @@ const PublicNavbar = () => {
       left: 0,
       right: 0,
       height: '70px',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: 'var(--surface)',
       backdropFilter: 'blur(10px)',
-      borderBottom: '1px solid rgba(0,0,0,0.05)',
+      borderBottom: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -68,6 +68,24 @@ const PublicNavbar = () => {
         </div>
 
         <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border)' }}></div>
+
+        <button 
+          onClick={toggleTheme}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: 'var(--text-muted)', 
+            cursor: 'pointer',
+            padding: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            transition: 'var(--transition)'
+          }}
+        >
+          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
 
         {user ? (
           <Link to="/" style={{ 
