@@ -2,8 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, User, Calendar, Tag, ChevronRight, Edit3, Trash2 } from 'lucide-react';
 import { useSpecimens } from '../context/SpecimenContext';
+import { useAuth } from '../context/AuthContext';
 
 const SpecimenCard = ({ specimen }) => {
+  const { user } = useAuth();
   const { deleteSpecimen } = useSpecimens();
 
   const handleDelete = async (e) => {
@@ -35,13 +37,15 @@ const SpecimenCard = ({ specimen }) => {
           }}>
             id: {specimen.occurrenceID.slice(0, 8)}
           </span>
-          <button 
-            onClick={handleDelete}
-            title="Eliminar ejemplar"
-            style={{ background: 'none', color: 'var(--error)', padding: '2px', display: 'flex', alignItems: 'center' }}
-          >
-            <Trash2 size={16} />
-          </button>
+          {user && (
+            <button 
+              onClick={handleDelete}
+              title="Eliminar ejemplar"
+              style={{ background: 'none', color: 'var(--error)', padding: '2px', display: 'flex', alignItems: 'center' }}
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -73,16 +77,18 @@ const SpecimenCard = ({ specimen }) => {
 
       <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
-          <Link to={`/edit/${specimen.occurrenceID}`} style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '4px', 
-            fontSize: '0.85rem', 
-            color: 'var(--secondary)',
-            fontWeight: '600'
-          }}>
-            <Edit3 size={16} /> Editar
-          </Link>
+          {user && (
+            <Link to={`/edit/${specimen.occurrenceID}`} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '4px', 
+              fontSize: '0.85rem', 
+              color: 'var(--secondary)',
+              fontWeight: '600'
+            }}>
+              <Edit3 size={16} /> Editar
+            </Link>
+          )}
         </div>
         <Link to={`/specimen/${specimen.occurrenceID}`} style={{ 
           display: 'flex', 

@@ -2,7 +2,10 @@ import React from 'react';
 import { Menu, Sun, Moon, Search, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '../context/AuthContext';
+
 const Navbar = ({ toggleSidebar, theme, toggleTheme }) => {
+  const { user } = useAuth();
   return (
     <nav style={{
       position: 'fixed',
@@ -65,23 +68,38 @@ const Navbar = ({ toggleSidebar, theme, toggleTheme }) => {
           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
         </button>
         
-        <button style={{ background: 'none', color: 'var(--text-main)' }}>
-          <Bell size={20} />
-        </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ 
-            width: '36px', 
-            height: '36px', 
-            borderRadius: 'var(--radius-full)', 
-            backgroundColor: 'var(--primary-light)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            color: 'var(--primary-dark)'
-          }}>U</div>
-        </div>
+        {user ? (
+          <>
+            <button style={{ background: 'none', color: 'var(--text-main)' }}>
+              <Bell size={20} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ 
+                width: '36px', 
+                height: '36px', 
+                borderRadius: 'var(--radius-full)', 
+                backgroundColor: 'var(--primary-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                color: 'var(--primary-dark)'
+              }}>{user.email?.[0].toUpperCase() || 'U'}</div>
+            </div>
+          </>
+        ) : (
+          <Link to="/login" style={{ 
+            backgroundColor: 'var(--primary)', 
+            color: 'white', 
+            padding: '8px 16px', 
+            borderRadius: 'var(--radius-md)',
+            textDecoration: 'none',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: '600'
+          }}>
+            Ingresar
+          </Link>
+        )}
       </div>
     </nav>
   );

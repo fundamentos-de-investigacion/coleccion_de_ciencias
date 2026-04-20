@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../api/supabase';
 import specimenService from '../services/specimenService';
+import auditService from '../services/auditService';
 import { normalizeSpecimenData } from '../utils/normalizationUtils';
 
 const SpecimenContext = createContext();
@@ -120,8 +121,28 @@ export const SpecimenProvider = ({ children }) => {
 
   const updateSpecimen = async (id, data) => {
     try {
+      const oldSpecimen = specimens.find(s => s.occurrenceID === id);
       const updated = await specimenService.update(id, data);
-      // setSpecimens is handled by real-time subscription
+      
+      // Audit tracking
+      if (oldSpecimen) {
+        const auditChanges = {};
+        const fieldsToTrack = ['scientificName', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'locality', 'decimalLatitude', 'decimalLongitude'];
+        
+        fieldsToTrack.forEach(field => {
+          if (oldSpecimen[field] !== data[field] && data[field] !== undefined) {
+            auditChanges[field] = {
+              old: oldSpecimen[field] || 'N/A',
+              new: data[field]
+            };
+          }
+        });
+
+        if (Object.keys(auditChanges).length > 0) {
+          await auditService.logChange(id, auditChanges, 'Corrección taxonómica/geográfica estándar');
+        }
+      }
+
       addNotification('Especimen actualizado correctamente');
       return updated;
     } catch (error) {

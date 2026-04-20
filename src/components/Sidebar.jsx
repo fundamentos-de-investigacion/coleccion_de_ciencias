@@ -14,17 +14,21 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  
   const navItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
-    { name: 'Catálogo', icon: <Database size={20} />, path: '/catalog' },
-    { name: 'Registrar', icon: <PlusCircle size={20} />, path: '/register' },
-    { name: 'Visualizaciones', icon: <BarChart3 size={20} />, path: '/visualizations' },
-    { name: 'Darwin Core', icon: <BookOpen size={20} />, path: '/darwin-core' },
-    { name: 'Importar/Exportar', icon: <FileUp size={20} />, path: '/import-export' },
-    { name: 'Préstamos', icon: <History size={20} />, path: '/loans' },
-    { name: 'Información', icon: <Info size={20} />, path: '/about' },
+    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/', visible: !!user },
+    { name: 'Catálogo', icon: <Database size={20} />, path: '/catalog', visible: true },
+    { name: 'Explorador Árbol', icon: <BookOpen size={20} />, path: '/taxonomy', visible: true },
+    { name: 'Registrar', icon: <PlusCircle size={20} />, path: '/register', visible: !!user },
+    { name: 'Visualizaciones', icon: <BarChart3 size={20} />, path: '/visualizations', visible: true },
+    { name: 'Darwin Core', icon: <BookOpen size={20} />, path: '/darwin-core', visible: true },
+    { name: 'Importar/Exportar', icon: <FileUp size={20} />, path: '/import-export', visible: !!user },
+    { name: 'Préstamos', icon: <History size={20} />, path: '/loans', visible: !!user },
+    { name: 'Información', icon: <Info size={20} />, path: '/about', visible: true },
   ];
+
+  const visibleNavItems = navItems.filter(item => item.visible);
 
   const sidebarStyle = {
     position: 'fixed',
@@ -71,7 +75,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
         Menu Principal
       </div>
 
-      {navItems.map((item) => (
+      {visibleNavItems.map((item) => (
         <NavLink 
           key={item.path} 
           to={item.path} 

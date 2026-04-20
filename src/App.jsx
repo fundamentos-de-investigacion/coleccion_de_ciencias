@@ -17,15 +17,24 @@ import ImportExport from './pages/ImportExport';
 import Loans from './pages/Loans';
 import About from './pages/About';
 import Login from './pages/Login';
+import TaxonomyExplorer from './pages/TaxonomyExplorer';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, publicAccess = false }) => {
   const { user, loading } = useAuth();
   
-  if (loading) return null; // Or a loading spinner
+  if (loading) return null;
+  
+  // If route is publicAccess, allow everyone
+  if (publicAccess) return children;
+  
+  // Otherwise, only authenticated users
   if (!user) return <Navigate to="/login" />;
   
   return children;
 };
+
+import PublicPortal from './pages/PublicPortal';
+import PublicNavbar from './components/PublicNavbar';
 
 function AppLayout() {
   const { user } = useAuth();
@@ -41,91 +50,59 @@ function AppLayout() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
+  // If user is logged in, show Admin Layout. If not, show Public Layout.
   return (
-    <div className="app-container" style={{ display: 'flex', minHeight: '100vh' }}>
-      {user && (
-        <>
+    <div className="app-container" style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }}>
+      {user ? (
+        <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
           <Navbar 
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
             theme={theme} 
             toggleTheme={toggleTheme} 
           />
           <Sidebar isOpen={isSidebarOpen} closeSidebar={() => setIsSidebarOpen(false)} />
-        </>
+          
+          <main style={{ 
+            flex: 1, 
+            padding: '80px 20px 20px', 
+            marginLeft: isSidebarOpen && window.innerWidth > 1024 ? '260px' : '0',
+            transition: 'margin-left 0.3s ease',
+            backgroundColor: 'var(--background)'
+          }}>
+            <Routes>
+              <Route path="/" element={<Dashboard theme={theme} />} />
+              <Route path="/catalog" element={<Catalog />} />
+              <Route path="/specimen/:id" element={<SpecimenDetail />} />
+              <Route path="/taxonomy" element={<TaxonomyExplorer />} />
+              <Route path="/register" element={<RegisterSpecimen />} />
+              <Route path="/edit/:id" element={<RegisterSpecimen />} />
+              <Route path="/visualizations" element={<DataVisualization />} />
+              <Route path="/darwin-core" element={<DarwinCoreInfo />} />
+              <Route path="/import-export" element={<ImportExport />} />
+              <Route path="/loans" element={<Loans />} />
+              <Route path="/about" element={<About />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+        </div>
+      ) : (
+        <div style={{ minHeight: '100vh', width: '100%' }}>
+          <PublicNavbar />
+          <main style={{ padding: '70px 0 0 0' }}>
+            <Routes>
+              <Route path="/" element={<PublicPortal />} />
+              <Route path="/catalog" element={<Catalog />} />
+              <Route path="/specimen/:id" element={<SpecimenDetail />} />
+              <Route path="/taxonomy" element={<TaxonomyExplorer />} />
+              <Route path="/visualizations" element={<DataVisualization />} />
+              <Route path="/darwin-core" element={<DarwinCoreInfo />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/about" element={<About />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+        </div>
       )}
-      
-      <main style={{ 
-        flex: 1, 
-        padding: user ? '80px 20px 20px' : '0', 
-        marginLeft: user && isSidebarOpen && window.innerWidth > 1024 ? '260px' : '0',
-        transition: 'margin-left 0.3s ease'
-      }}>
-        <Routes>
-          <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-          
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Dashboard theme={theme} />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/catalog" element={
-            <ProtectedRoute>
-              <Catalog />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/specimen/:id" element={
-            <ProtectedRoute>
-              <SpecimenDetail />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/register" element={
-            <ProtectedRoute>
-              <RegisterSpecimen />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/edit/:id" element={
-            <ProtectedRoute>
-              <RegisterSpecimen />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/visualizations" element={
-            <ProtectedRoute>
-              <DataVisualization />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/darwin-core" element={
-            <ProtectedRoute>
-              <DarwinCoreInfo />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/import-export" element={
-            <ProtectedRoute>
-              <ImportExport />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/loans" element={
-            <ProtectedRoute>
-              <Loans />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/about" element={
-            <ProtectedRoute>
-              <About />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </main>
 
       <Notifications />
     </div>

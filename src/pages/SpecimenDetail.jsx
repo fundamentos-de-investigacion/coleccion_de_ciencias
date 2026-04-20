@@ -7,17 +7,21 @@ import {
 } from 'lucide-react';
 import loanService from '../services/loanService';
 import mediaService from '../services/mediaService';
+import auditService from '../services/auditService';
 import MapComponent from '../components/MapComponent';
+import { useAuth } from '../context/AuthContext';
 import { generateAPACitation, generateBibTeXCitation } from '../utils/citationUtils';
 
 const SpecimenDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { specimens, deleteSpecimen } = useSpecimens();
 
   const specimen = specimens.find(s => s.occurrenceID === id);
   const [specimenLoans, setSpecimenLoans] = React.useState([]);
   const [specimenMedia, setSpecimenMedia] = React.useState([]);
+  const [specimenAudit, setSpecimenAudit] = React.useState([]);
   const [isLoanModalOpen, setIsLoanModalOpen] = React.useState(false);
   const [citationModal, setCitationModal] = React.useState(null); // 'apa' | 'bibtex' | null
 
@@ -25,6 +29,7 @@ const SpecimenDetail = () => {
     if (id) {
       loanService.getBySpecimen(id).then(setSpecimenLoans);
       mediaService.getBySpecimen(id).then(setSpecimenMedia);
+      auditService.getBySpecimen(id).then(setSpecimenAudit);
     }
   }, [id]);
 
@@ -94,34 +99,38 @@ const SpecimenDetail = () => {
           >
             <Quote size={18} /> Generar Cita
           </button>
-          <Link to={`/edit/${id}`} style={{ 
-            backgroundColor: 'var(--surface)', 
-            color: 'var(--primary)', 
-            border: '1px solid var(--primary)',
-            padding: '8px 16px',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontWeight: '600'
-          }}>
-            <Edit3 size={18} /> Editar
-          </Link>
-          <button 
-            onClick={handleDelete}
-            style={{ 
-              backgroundColor: 'var(--error)', 
-              color: 'white', 
-              padding: '8px 16px',
-              borderRadius: 'var(--radius-md)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontWeight: '600'
-            }}
-          >
-            <Trash2 size={18} /> Eliminar
-          </button>
+          {user && (
+            <>
+              <Link to={`/edit/${id}`} style={{ 
+                backgroundColor: 'var(--surface)', 
+                color: 'var(--primary)', 
+                border: '1px solid var(--primary)',
+                padding: '8px 16px',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: '600'
+              }}>
+                <Edit3 size={18} /> Editar
+              </Link>
+              <button 
+                onClick={handleDelete}
+                style={{ 
+                  backgroundColor: 'var(--error)', 
+                  color: 'white', 
+                  padding: '8px 16px',
+                  borderRadius: 'var(--radius-md)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontWeight: '600'
+                }}
+              >
+                <Trash2 size={18} /> Eliminar
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -237,20 +246,22 @@ const SpecimenDetail = () => {
               <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
                 <History size={18} color="var(--secondary)" /> Gestión de Préstamos
               </h4>
-              <button 
-                onClick={() => setIsLoanModalOpen(true)}
-                style={{ 
-                  backgroundColor: 'var(--primary)', 
-                  color: 'white', 
-                  fontSize: '0.75rem', 
-                  padding: '4px 10px', 
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                + Registrar Préstamo
-              </button>
+              {user && (
+                <button 
+                  onClick={() => setIsLoanModalOpen(true)}
+                  style={{ 
+                    backgroundColor: 'var(--primary)', 
+                    color: 'white', 
+                    fontSize: '0.75rem', 
+                    padding: '4px 10px', 
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  + Registrar Préstamo
+                </button>
+              )}
             </div>
             
             {specimenLoans.length > 0 ? (
@@ -291,21 +302,33 @@ const SpecimenDetail = () => {
 
           <div className="sci-card glass">
             <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-              <History size={18} color="var(--secondary)" /> Auditoría de Datos
+              <Clock size={18} color="var(--secondary)" /> Historial de Cambios (Auditoría)
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-                <Clock size={14} color="var(--text-muted)" />
-                <span><strong>Creado:</strong> {new Date(specimen.createdAt).toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-                <Clock size={14} color="var(--text-muted)" />
-                <span><strong>Última Modificación:</strong> {new Date(specimen.lastModified).toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-                <Tag size={14} color="var(--text-muted)" />
-                <span><strong>Estructura:</strong> Darwin Core v{specimen.version || 1}</span>
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '300px', overflowY: 'auto', paddingRight: '5px' }}>
+              {specimenAudit.length > 0 ? (
+                specimenAudit.map(log => (
+                  <div key={log.id} style={{ fontSize: '0.8rem', paddingBottom: '10px', borderBottom: '1px dashed var(--border)' }}>
+                    <div style={{ fontWeight: '700', color: 'var(--text-main)', marginBottom: '3px' }}>
+                      {log.user_email} corrigió <span style={{ color: 'var(--primary)' }}>{log.field_name}</span>
+                    </div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '5px' }}>
+                      {new Date(log.created_at).toLocaleString()}
+                    </div>
+                    <div style={{ padding: '5px', backgroundColor: 'var(--surface)', borderRadius: '4px' }}>
+                      <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{log.old_value}</span> → <strong>{log.new_value}</strong>
+                    </div>
+                    {log.reason && (
+                      <div style={{ marginTop: '5px', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                        Motivo: "{log.reason}"
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  No se han registrado modificaciones taxonómicas.
+                </p>
+              )}
             </div>
           </div>
 
