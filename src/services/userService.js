@@ -19,20 +19,34 @@ class UserService {
    */
   async createUser(email, password, role, permissions) {
     // 1. Obtener el token del admin activo para autenticar la Edge Function
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    console.log('🔑 [DEBUG] sessionErr:', sessionErr);
+    console.log('🔑 [DEBUG] session exists:', !!session);
+    console.log('🔑 [DEBUG] token (primeros 30):', session?.access_token?.slice(0, 30));
+    console.log('🔑 [DEBUG] token expira en (seg):', session?.expires_at ? session.expires_at - Math.floor(Date.now()/1000) : 'N/A');
     if (!session?.access_token) {
       throw new Error('No hay sesión activa. Por favor, inicia sesión de nuevo.');
     }
 
     // 2. Invocar la Edge Function pasando el JWT explícitamente en el header
+    console.log('🚀 [DEBUG] Invocando Edge Function create-user...');
     const { data: functionData, error: functionError } = await supabase.functions.invoke('create-user', {
       body: { email, password },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
     });
-
+    console.log('📡 [DEBUG] functionData:', functionData);
+    console.log('📡 [DEBUG] functionError:', functionError);
     if (functionError) {
+      // Leer el cuerpo real de la respuesta del servidor para ver el error exacto
+      try {
+        const errorBody = await functionError.context?.json();
+        console.error('📡 [DEBUG] Mensaje exacto del servidor:', errorBody);
+      } catch {
+        const errorText = await functionError.context?.text?.();
+        console.error('📡 [DEBUG] Respuesta cruda del servidor:', errorText);
+      }
       console.error('Error al invocar Edge Function:', functionError);
       throw functionError;
     }
