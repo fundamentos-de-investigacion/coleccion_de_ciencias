@@ -13,14 +13,27 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Validate JWT from the request to ensure only logged-in users can call this
+    // 1. Validate JWT from the request
     const authHeader = req.headers.get('Authorization')
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-    if (!authHeader || !supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-      throw new Error('Server misconfiguration or missing authorization header')
+    console.log('[create-user] Auth header present:', !!authHeader)
+    console.log('[create-user] Env vars present:', { supabaseUrl: !!supabaseUrl, supabaseAnonKey: !!supabaseAnonKey, supabaseServiceKey: !!supabaseServiceKey })
+
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+      return new Response(JSON.stringify({ error: 'Server misconfiguration: missing env vars' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     // Create standard client to verify user token
@@ -30,12 +43,15 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser()
 
+    console.log('[create-user] getUser result:', { userId: user?.id, error: userError?.message })
+
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: `Unauthorized: ${userError?.message || 'No user found'}` }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
 
     // Verify that the caller has admin rights in user_roles table
     const { data: roleData, error: roleError } = await supabaseUserClient
