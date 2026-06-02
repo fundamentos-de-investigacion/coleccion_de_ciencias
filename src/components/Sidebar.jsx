@@ -15,19 +15,28 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, userPermissions, signOut } = useAuth();
   
+  const hasAccess = (key, defaultPublic = false) => {
+    if (userRole === 'admin') return true;
+    if (!user) return defaultPublic;
+    if (userPermissions && userPermissions[key] !== undefined) {
+      return userPermissions[key];
+    }
+    return defaultPublic;
+  };
+
   const navItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/', visible: !!user },
-    { name: 'Catálogo', icon: <Database size={20} />, path: '/catalog', visible: true },
-    { name: 'Explorador Árbol', icon: <BookOpen size={20} />, path: '/taxonomy', visible: true },
-    { name: 'Registrar', icon: <PlusCircle size={20} />, path: '/register', visible: !!user },
-    { name: 'Visualizaciones', icon: <BarChart3 size={20} />, path: '/visualizations', visible: true },
-    { name: 'Darwin Core', icon: <BookOpen size={20} />, path: '/darwin-core', visible: true },
-    { name: 'Importar/Exportar', icon: <FileUp size={20} />, path: '/import-export', visible: !!user },
-    { name: 'Préstamos', icon: <History size={20} />, path: '/loans', visible: !!user },
+    { name: 'Catálogo', icon: <Database size={20} />, path: '/catalog', visible: hasAccess('catalog', true) },
+    { name: 'Explorador Árbol', icon: <BookOpen size={20} />, path: '/taxonomy', visible: hasAccess('taxonomy', true) },
+    { name: 'Registrar', icon: <PlusCircle size={20} />, path: '/register', visible: hasAccess('register', false) },
+    { name: 'Visualizaciones', icon: <BarChart3 size={20} />, path: '/visualizations', visible: hasAccess('visualizations', true) },
+    { name: 'Darwin Core', icon: <BookOpen size={20} />, path: '/darwin-core', visible: hasAccess('darwin-core', true) },
+    { name: 'Importar/Exportar', icon: <FileUp size={20} />, path: '/import-export', visible: hasAccess('import-export', false) },
+    { name: 'Préstamos', icon: <History size={20} />, path: '/loans', visible: hasAccess('loans', false) },
     { name: 'Usuarios', icon: <Users size={20} />, path: '/users', visible: userRole === 'admin' },
-    { name: 'Información', icon: <Info size={20} />, path: '/about', visible: true },
+    { name: 'Información', icon: <Info size={20} />, path: '/about', visible: hasAccess('about', true) },
   ];
 
   const visibleNavItems = navItems.filter(item => item.visible);
@@ -45,7 +54,8 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     zIndex: 999,
     display: 'flex',
     flexDirection: 'column',
-    gap: '5px'
+    gap: '5px',
+    overflowY: 'auto'
   };
 
   const linkStyle = ({ isActive }) => ({

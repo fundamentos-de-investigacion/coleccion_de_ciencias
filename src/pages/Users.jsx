@@ -14,6 +14,16 @@ const Users = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('auxiliar');
+  const [permissions, setPermissions] = useState({
+    register: false,
+    'import-export': false,
+    loans: false
+  });
+
+  const handlePermissionChange = (e) => {
+    const { name, checked } = e.target;
+    setPermissions(prev => ({ ...prev, [name]: checked }));
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -44,12 +54,12 @@ const Users = () => {
     }
 
     try {
-      // Por simplicidad, permissions lo dejamos como objeto vacío.
-      await userService.createUser(email, password, role, {});
+      await userService.createUser(email, password, role, permissions);
       setIsModalOpen(false);
       setEmail('');
       setPassword('');
       setRole('auxiliar');
+      setPermissions({ register: false, 'import-export': false, loans: false });
       fetchUsers();
     } catch (err) {
       console.error(err);
@@ -212,12 +222,37 @@ const Users = () => {
                 <select 
                   value={role} 
                   onChange={(e) => setRole(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', marginBottom: '15px' }}
                 >
-                  <option value="auxiliar">Auxiliar (Solo lectura / ingreso básico)</option>
+                  <option value="auxiliar">Auxiliar (Accesos restringidos)</option>
                   <option value="admin">Administrador (Control total)</option>
                 </select>
               </div>
+
+              {role === 'auxiliar' && (
+                <div style={{ padding: '15px', backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                  <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', fontSize: '0.9rem' }}>Permisos del Auxiliar:</label>
+                  
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.85rem' }}>
+                    <input type="checkbox" name="register" checked={permissions.register} onChange={handlePermissionChange} />
+                    Puede Registrar / Editar Especímenes
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.85rem' }}>
+                    <input type="checkbox" name="loans" checked={permissions.loans} onChange={handlePermissionChange} />
+                    Gestión de Préstamos
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                    <input type="checkbox" name="import-export" checked={permissions['import-export']} onChange={handlePermissionChange} />
+                    Importar y Exportar Datos
+                  </label>
+                  
+                  <div style={{ marginTop: '10px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    * El Catálogo, Explorador y Visualizaciones siempre son públicos.
+                  </div>
+                </div>
+              )}
 
               <button 
                 type="submit"
