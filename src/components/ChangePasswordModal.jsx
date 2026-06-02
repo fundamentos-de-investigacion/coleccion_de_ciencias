@@ -45,10 +45,12 @@ const ChangePasswordModal = ({ onClose }) => {
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 2000
+      alignItems: 'flex-start',
+      zIndex: 2000,
+      padding: '40px 20px',
+      overflowY: 'auto'
     }}>
-      <div className="glass sci-card" style={{ width: '100%', maxWidth: '400px', padding: '30px', position: 'relative' }}>
+      <div className="glass sci-card" style={{ width: '100%', maxWidth: '400px', padding: '30px', position: 'relative', margin: 'auto' }}>
         <h2 style={{ marginBottom: '20px', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Key size={24} />
           Cambiar Contraseña

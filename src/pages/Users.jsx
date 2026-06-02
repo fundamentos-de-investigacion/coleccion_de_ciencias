@@ -181,10 +181,18 @@ const Users = () => {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
+          alignItems: 'flex-start',
+          zIndex: 1000,
+          padding: '40px 20px',
+          overflowY: 'auto'
         }}>
-          <div className="glass sci-card" style={{ width: '100%', maxWidth: '400px', padding: '30px', position: 'relative' }}>
+          <div className="glass sci-card" style={{ 
+            width: '100%', 
+            maxWidth: '400px', 
+            padding: '30px', 
+            position: 'relative',
+            margin: 'auto'
+          }}>
             <h2 style={{ marginBottom: '20px', color: 'var(--primary-dark)' }}>Crear Usuario Auxiliar</h2>
             <button 
               onClick={() => setIsModalOpen(false)}
