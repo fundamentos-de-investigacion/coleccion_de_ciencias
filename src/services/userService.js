@@ -18,19 +18,23 @@ class UserService {
    * Crea un usuario y le asigna el rol.
    */
   async createUser(email, password, role, permissions) {
-    // 1. Crear el usuario en auth.users
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
+    // 1. Invocar la Edge Function para crear el usuario sin sobrescribir la sesión
+    const { data: functionData, error: functionError } = await supabase.functions.invoke('create-user', {
+      body: { email, password }
     });
 
-    if (authError) {
-      console.error('Error al crear cuenta:', authError);
-      throw authError;
+    if (functionError) {
+      console.error('Error al invocar Edge Function:', functionError);
+      throw functionError;
     }
 
-    const newUserId = authData.user?.id;
-    if (!newUserId) throw new Error('No se pudo obtener el ID del nuevo usuario.');
+    if (functionData?.error) {
+      console.error('Error de la Edge Function:', functionData.error);
+      throw new Error(functionData.error);
+    }
+
+    const newUserId = functionData?.user?.id;
+    if (!newUserId) throw new Error('No se pudo obtener el ID del nuevo usuario desde la Edge Function.');
 
     // 2. Insertar el rol y permisos
     const { error: roleError } = await supabase
