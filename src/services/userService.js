@@ -1,15 +1,4 @@
 import { supabase } from '../api/supabase';
-import { createClient } from '@supabase/supabase-js';
-
-// Cliente secundario para no cerrar la sesión del admin al crear usuarios.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-const secondarySupabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
-  { auth: { persistSession: false } }
-);
 
 class UserService {
   /**
@@ -26,11 +15,11 @@ class UserService {
   }
 
   /**
-   * Crea un usuario usando un cliente secundario, y luego le asigna el rol.
+   * Crea un usuario y le asigna el rol.
    */
   async createUser(email, password, role, permissions) {
-    // 1. Crear el usuario en auth.users (sin desloguear al admin)
-    const { data: authData, error: authError } = await secondarySupabase.auth.signUp({
+    // 1. Crear el usuario en auth.users
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
     });
