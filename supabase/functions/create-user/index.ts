@@ -19,9 +19,6 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-    console.log('[create-user] Auth header present:', !!authHeader)
-    console.log('[create-user] Env vars present:', { supabaseUrl: !!supabaseUrl, supabaseAnonKey: !!supabaseAnonKey, supabaseServiceKey: !!supabaseServiceKey })
-
     if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       return new Response(JSON.stringify({ error: 'Server misconfiguration: missing env vars' }), {
         status: 500,
@@ -36,25 +33,29 @@ serve(async (req) => {
       })
     }
 
-    // Create standard client to verify user token
-    const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
+    // Extract the raw token from "Bearer <token>"
+    const token = authHeader.replace('Bearer ', '')
+
+    // Create Admin client (used for both validation and user creation)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     })
 
-    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser()
-
-    console.log('[create-user] getUser result:', { userId: user?.id, error: userError?.message })
+    // Use admin client to validate the user's JWT directly — the correct pattern in Edge Functions
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
 
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: `Unauthorized: ${userError?.message || 'No user found'}` }), {
+      return new Response(JSON.stringify({ error: `Unauthorized: ${userError?.message || 'Invalid token'}` }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-
-    // Verify that the caller has admin rights in user_roles table
-    const { data: roleData, error: roleError } = await supabaseUserClient
+    // Verify admin role using the admin client directly
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
@@ -67,6 +68,7 @@ serve(async (req) => {
       })
     }
 
+
     // 2. Extract payload
     const { email, password } = await req.json()
 
@@ -77,15 +79,9 @@ serve(async (req) => {
       })
     }
 
-    // 3. Create Admin client using Service Role Key
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
 
-    // 4. Create the new user
+    // 3. Create the new user using the already-initialized admin client
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
