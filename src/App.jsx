@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SpecimenProvider } from './context/SpecimenContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Notifications from './components/Notifications';
@@ -115,11 +116,13 @@ function AppLayout() {
 function App() {
   return (
     <Router>
+      <ErrorBoundary>
       <AuthProvider>
         <SpecimenProvider>
           <AppLayout />
         </SpecimenProvider>
       </AuthProvider>
+      </ErrorBoundary>
     </Router>
   );
 }
