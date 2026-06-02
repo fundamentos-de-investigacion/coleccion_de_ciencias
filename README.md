@@ -37,7 +37,18 @@ Este es un sistema académico de grado profesional para la gestión de coleccion
    ```bash
    npm install
    ```
-4. Inicie el servidor de desarrollo:
+4. **Configuración de Supabase (Base de Datos):**
+   Este proyecto utiliza Supabase como Backend as a Service. Necesitas crear un proyecto gratuito en Supabase para almacenar la información.
+   - Copia el archivo `.env.example` y renómbrelo a `.env`.
+   - Llene las variables con las credenciales de tu proyecto (URL y Anon Key):
+     ```env
+     VITE_SUPABASE_URL=tu_supabase_project_url
+     VITE_SUPABASE_ANON_KEY=tu_supabase_anon_public_key
+     ```
+   - **IMPORTANTE:** Para que la aplicación funcione, es vital crear las tablas de base de datos requeridas. Copia el contenido del archivo `supabase-setup.sql` incluido en la raíz de este proyecto, pégalo en el **SQL Editor** de tu panel de Supabase y dale a "Run" (Ejecutar).
+   - Para empezar a usar el sistema, puedes crear un usuario utilizando la página de Registro propia de la aplicación (ruta `/register`), o añadirlo manualmente desde la pestaña "Authentication" -> "Users" de tu panel de Supabase.
+
+5. Inicie el servidor de desarrollo:
    ```bash
    npm run dev
    ```
