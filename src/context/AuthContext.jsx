@@ -34,17 +34,30 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(async (response) => {
+      const { data, error } = response;
+      if (error || !data) {
+        console.error('Error getting session:', error);
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
+      const session = data.session;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user?.id) {
         await fetchRole(session.user.id);
       }
       setLoading(false);
+    }).catch(err => {
+      console.error('Unexpected error in getSession:', err);
+      setLoading(false);
     });
 
     // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const authListener = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user?.id) {
@@ -56,7 +69,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    const subscription = authListener?.data?.subscription;
+
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
