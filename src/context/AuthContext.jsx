@@ -42,6 +42,8 @@ export const AuthProvider = ({ children }) => {
       loadingRef.current = false;
       setLoading(false);
     }
+  };
+
   useEffect(() => {
     // Failsafe to ensure the app ALWAYS renders eventually
     const failsafeTimer = setTimeout(() => {
