@@ -18,9 +18,18 @@ class UserService {
    * Crea un usuario y le asigna el rol.
    */
   async createUser(email, password, role, permissions) {
-    // 1. Invocar la Edge Function para crear el usuario sin sobrescribir la sesión
+    // 1. Obtener el token del admin activo para autenticar la Edge Function
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('No hay sesión activa. Por favor, inicia sesión de nuevo.');
+    }
+
+    // 2. Invocar la Edge Function pasando el JWT explícitamente en el header
     const { data: functionData, error: functionError } = await supabase.functions.invoke('create-user', {
-      body: { email, password }
+      body: { email, password },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     if (functionError) {
