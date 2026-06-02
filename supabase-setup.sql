@@ -109,3 +109,56 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('specimen-media', 'specimen-media', true)
 ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 8. Gestión de Usuarios y Roles (RBAC)
+-- ==============================================================================
+
+-- Crear tabla de roles
+CREATE TABLE IF NOT EXISTS public.user_roles (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'auxiliar',
+    permissions JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Asignar rol admin a los usuarios existentes que no tengan rol en la tabla
+INSERT INTO public.user_roles (user_id, role, permissions)
+SELECT id, 'admin', '{"all": true}'::jsonb
+FROM auth.users
+ON CONFLICT (user_id) DO NOTHING;
+
+-- Función para leer los perfiles (que cruza información con auth.users protegida)
+CREATE OR REPLACE FUNCTION get_user_profiles()
+RETURNS TABLE (
+    id UUID,
+    email VARCHAR,
+    role TEXT,
+    permissions JSONB,
+    created_at TIMESTAMP WITH TIME ZONE
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY 
+    SELECT 
+        u.id, 
+        u.email::VARCHAR, 
+        COALESCE(r.role, 'auxiliar'), 
+        COALESCE(r.permissions, '{}'::jsonb),
+        u.created_at
+    FROM auth.users u
+    LEFT JOIN public.user_roles r ON u.id = r.user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para borrar usuarios completamente (desde auth.users)
+CREATE OR REPLACE FUNCTION admin_delete_user(target_user_id UUID)
+RETURNS BOOLEAN
+SECURITY DEFINER
+AS $$
+BEGIN
+    DELETE FROM auth.users WHERE id = target_user_id;
+    RETURN true;
+END;
+$$ LANGUAGE plpgsql;

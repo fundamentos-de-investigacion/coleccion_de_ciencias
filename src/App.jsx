@@ -19,6 +19,8 @@ import About from './pages/About';
 import Login from './pages/Login';
 import TaxonomyExplorer from './pages/TaxonomyExplorer';
 
+import Users from './pages/Users';
+
 const ProtectedRoute = ({ children, publicAccess = false }) => {
   const { user, loading } = useAuth();
   
@@ -80,6 +82,7 @@ function AppLayout() {
               <Route path="/darwin-core" element={<DarwinCoreInfo />} />
               <Route path="/import-export" element={<ImportExport />} />
               <Route path="/loans" element={<Loans />} />
+              <Route path="/users" element={<Users />} />
               <Route path="/about" element={<About />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

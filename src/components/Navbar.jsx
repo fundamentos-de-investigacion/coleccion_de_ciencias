@@ -1,11 +1,13 @@
-import React from 'react';
-import { Menu, Sun, Moon, Search, Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Sun, Moon, Search, Bell, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const Navbar = ({ toggleSidebar, theme, toggleTheme }) => {
   const { user } = useAuth();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   return (
     <nav style={{
       position: 'fixed',
@@ -73,7 +75,14 @@ const Navbar = ({ toggleSidebar, theme, toggleTheme }) => {
             <button style={{ background: 'none', color: 'var(--text-main)' }}>
               <Bell size={20} />
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <button 
+                onClick={() => setIsPasswordModalOpen(true)}
+                title="Cambiar Contraseña"
+                style={{ background: 'none', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
+              >
+                <Key size={18} />
+              </button>
               <div style={{ 
                 width: '36px', 
                 height: '36px', 
@@ -83,8 +92,11 @@ const Navbar = ({ toggleSidebar, theme, toggleTheme }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                color: 'var(--primary-dark)'
-              }}>{user.email?.[0].toUpperCase() || 'U'}</div>
+                color: 'var(--primary-dark)',
+                cursor: 'pointer'
+              }} title={user.email}>
+                {user.email?.[0].toUpperCase() || 'U'}
+              </div>
             </div>
           </>
         ) : (
@@ -101,6 +113,10 @@ const Navbar = ({ toggleSidebar, theme, toggleTheme }) => {
           </Link>
         )}
       </div>
+
+      {isPasswordModalOpen && (
+        <ChangePasswordModal onClose={() => setIsPasswordModalOpen(false)} />
+      )}
     </nav>
   );
 };

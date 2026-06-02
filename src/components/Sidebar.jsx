@@ -9,12 +9,13 @@ import {
   FileUp, 
   History,
   Info,
-  X
+  X,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
-  const { user, signOut } = useAuth();
+  const { user, userRole, signOut } = useAuth();
   
   const navItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/', visible: !!user },
@@ -25,6 +26,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     { name: 'Darwin Core', icon: <BookOpen size={20} />, path: '/darwin-core', visible: true },
     { name: 'Importar/Exportar', icon: <FileUp size={20} />, path: '/import-export', visible: !!user },
     { name: 'Préstamos', icon: <History size={20} />, path: '/loans', visible: !!user },
+    { name: 'Usuarios', icon: <Users size={20} />, path: '/users', visible: userRole === 'admin' },
     { name: 'Información', icon: <Info size={20} />, path: '/about', visible: true },
   ];
 
