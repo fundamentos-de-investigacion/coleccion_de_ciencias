@@ -44,73 +44,75 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Effect for handling role fetching when user changes
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadRole = async () => {
+      if (user?.id) {
+        await fetchRole(user.id);
+      } else {
+        setUserRole(null);
+        setUserPermissions({});
+      }
+      if (isMounted) {
+        setLoading(false);
+        loadingRef.current = false;
+      }
+    };
+
+    loadRole();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
   useEffect(() => {
     // Failsafe to ensure the app ALWAYS renders eventually
     const failsafeTimer = setTimeout(() => {
-      if (loading) {
+      if (loadingRef.current) {
         console.warn('AuthContext timeout reached, forcing load...');
         setLoading(false);
+        loadingRef.current = false;
       }
-    }, 3000);
+    }, 4000);
 
-    try {
-      // Get initial session
-      supabase.auth.getSession().then(async (response) => {
-        try {
-          const { data, error } = response || {};
-          if (error || !data || !data.session) {
-            setSession(null);
-            setUser(null);
-            setLoading(false);
-            return;
-          }
-          
-          const currentSession = data.session;
-          setSession(currentSession);
-          setUser(currentSession.user ?? null);
-          
-          if (currentSession.user?.id) {
-            await fetchRole(currentSession.user.id);
-          }
-        } catch (innerErr) {
-          console.error('Error procesando session:', innerErr);
-        } finally {
+    const initializeAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data?.session) {
+          setSession(null);
+          setUser(null);
           setLoading(false);
+          loadingRef.current = false;
+          return;
         }
-      }).catch(err => {
+        setSession(data.session);
+        setUser(data.session.user);
+        // fetchRole will be triggered by the other useEffect
+      } catch (err) {
         console.error('Unexpected error in getSession:', err);
         setLoading(false);
-      });
+        loadingRef.current = false;
+      }
+    };
 
-      // Listen for changes
-      const authListener = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
-        try {
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
-          if (currentSession?.user?.id) {
-            await fetchRole(currentSession.user.id);
-          } else {
-            setUserRole(null);
-            setUserPermissions({});
-          }
-        } catch (innerErr) {
-          console.error('Error en onAuthStateChange:', innerErr);
-        } finally {
-          setLoading(false);
-        }
-      });
+    initializeAuth();
 
-      const subscription = authListener?.data?.subscription;
+    // Listen for changes WITHOUT making async Supabase DB calls inside to avoid deadlock
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      // fetchRole and setLoading(false) are handled by the user?.id useEffect
+    });
 
-      return () => {
-        clearTimeout(failsafeTimer);
-        if (subscription) subscription.unsubscribe();
-      };
-    } catch (criticalErr) {
-      console.error('Critical error in AuthContext effect:', criticalErr);
-      setLoading(false);
-      return () => clearTimeout(failsafeTimer);
-    }
+    return () => {
+      clearTimeout(failsafeTimer);
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const signOut = async () => {
